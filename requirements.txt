@@ -1,0 +1,8 @@
+numpy
+pandas
+scipy
+scikit-learn
+setuptools
+matplotlib
+dateutil
+python-dateutil
