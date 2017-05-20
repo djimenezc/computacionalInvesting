@@ -33,8 +33,8 @@ def main():
     ls_symbols = ["AAPL", "GLD", "GOOG", "$SPX", "XOM"]
 
     # Start and End date of the charts
-    dt_start = dt.datetime(2010, 1, 1)
-    dt_end = dt.datetime(2010, 1, 15)
+    dt_start = dt.datetime(2007, 1, 1)
+    dt_end = dt.datetime(2017, 05, 20)
 
     # We need closing prices so the timestamp should be hours=16.
     dt_timeofday = dt.timedelta(hours=16)
