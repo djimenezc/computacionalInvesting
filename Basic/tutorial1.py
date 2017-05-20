@@ -11,15 +11,17 @@ Created on January, 24, 2013
 @summary: Example tutorial code.
 '''
 
+# Third Party Imports
+import datetime as dt
+import matplotlib.pyplot as plt
+import pandas as pd
+import os
+
 # QSTK Imports
 import QSTK.qstkutil.qsdateutil as du
 import QSTK.qstkutil.tsutil as tsu
 import QSTK.qstkutil.DataAccess as da
 
-# Third Party Imports
-import datetime as dt
-import matplotlib.pyplot as plt
-import pandas as pd
 
 print "Pandas Version", pd.__version__
 
@@ -31,8 +33,8 @@ def main():
     ls_symbols = ["AAPL", "GLD", "GOOG", "$SPX", "XOM"]
 
     # Start and End date of the charts
-    dt_start = dt.datetime(2006, 1, 1)
-    dt_end = dt.datetime(2010, 12, 31)
+    dt_start = dt.datetime(2010, 1, 1)
+    dt_end = dt.datetime(2010, 1, 15)
 
     # We need closing prices so the timestamp should be hours=16.
     dt_timeofday = dt.timedelta(hours=16)
@@ -66,7 +68,10 @@ def main():
     plt.legend(ls_symbols)
     plt.ylabel('Adjusted Close')
     plt.xlabel('Date')
-    plt.savefig('adjustedclose.pdf', format='pdf')
+    output_path = 'out'
+    if not os.path.exists(output_path):
+        os.makedirs(output_path)
+    plt.savefig(output_path+'/adjustedclose.pdf', format='pdf')
 
     # Normalizing the prices to start at 1 and see relative returns
     na_normalized_price = na_price / na_price[0, :]
@@ -77,7 +82,7 @@ def main():
     plt.legend(ls_symbols)
     plt.ylabel('Normalized Close')
     plt.xlabel('Date')
-    plt.savefig('normalized.pdf', format='pdf')
+    plt.savefig(output_path+'/normalized.pdf', format='pdf')
 
     # Copy the normalized prices to a new ndarry to find returns.
     na_rets = na_normalized_price.copy()
@@ -94,21 +99,21 @@ def main():
     plt.legend(['$SPX', 'XOM'])
     plt.ylabel('Daily Returns')
     plt.xlabel('Date')
-    plt.savefig('rets.pdf', format='pdf')
+    plt.savefig(output_path+'/rets.pdf', format='pdf')
 
     # Plotting the scatter plot of daily returns between XOM VS $SPX
     plt.clf()
     plt.scatter(na_rets[:, 3], na_rets[:, 4], c='blue')
     plt.ylabel('XOM')
     plt.xlabel('$SPX')
-    plt.savefig('scatterSPXvXOM.pdf', format='pdf')
+    plt.savefig(output_path+'/scatterSPXvXOM.pdf', format='pdf')
 
     # Plotting the scatter plot of daily returns between $SPX VS GLD
     plt.clf()
     plt.scatter(na_rets[:, 3], na_rets[:, 1], c='blue')  # $SPX v GLD
     plt.ylabel('GLD')
     plt.xlabel('$SPX')
-    plt.savefig('scatterSPXvGLD.pdf', format='pdf')
+    plt.savefig(output_path+'/scatterSPXvGLD.pdf', format='pdf')
 
 if __name__ == '__main__':
     main()
