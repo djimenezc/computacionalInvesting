@@ -18,7 +18,7 @@ def test_simulate1(dt_start, dt_end, allocations, symbols, vol_exp,
                    cum_ret_exp, sharpe_exp):
     vol, daily_ret, sharpe, cum_ret = simulate(dt_start, dt_end,
                                                symbols, allocations)
-    # assert vol == vol_exp
-    # assert daily_ret == daily_ret_exp
+    assert np.isclose(vol, vol_exp)
+    assert np.isclose(daily_ret, daily_ret_exp)
     assert np.isclose(cum_ret, cum_ret_exp)
-    # assert sharpe == sharpe_exp
+    assert np.isclose(sharpe, sharpe_exp)

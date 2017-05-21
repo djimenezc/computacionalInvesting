@@ -16,7 +16,7 @@ import os
 
 # QSTK Imports
 import QSTK.qstkutil.qsdateutil as du
-# import QSTK.qstkutil.tsutil as tsu
+import QSTK.qstkutil.tsutil as tsu
 import QSTK.qstkutil.DataAccess as da
 
 # We need closing prices so the timestamp should be hours=16.
@@ -81,25 +81,38 @@ def calculate_series_return(price_series):
     return price_series[-1] - price_series[0]
 
 
-def get_cumulative_return(na_price, ls_allocations):
-    na_normalized_price = na_price / na_price[0, :]
-
-    na_port_returns = np.sum(na_normalized_price * ls_allocations,
-                             axis=1)
+def get_cumulative_return(na_port_normalized_price):
+    na_port_returns = np.sum(na_port_normalized_price, axis=1)
 
     return na_port_returns[-1]
 
 
 def simulate(dt_start_date, dt_end_date, ls_symbols, ls_allocations):
-    vol = 0
-    daily_ret = 0
-    sharpe = 0
-
     d_data, ldt_timestamps = get_data(dt_start_date, dt_end_date, ls_symbols)
 
     create_output_folder()
     na_price = plot_close_price_series(d_data, ldt_timestamps, ls_symbols)
 
-    cum_ret = get_cumulative_return(na_price, ls_allocations)
+    na_normalized_price = na_price / na_price[0, :]
+    na_weighted_price = na_normalized_price * ls_allocations
 
-    return vol, daily_ret, sharpe, cum_ret
+    cum_ret = get_cumulative_return(na_weighted_price)
+
+    # row-wise sum
+    na_portf_value = na_weighted_price.copy().sum(axis=1)
+
+    # Calculate daily returns on portfolio
+    na_portf_rets = na_portf_value.copy()
+    tsu.returnize0(na_portf_rets)
+
+    # Calculate volatility (stdev) of daily returns of portfolio
+    f_portf_volatility = np.std(na_portf_rets)
+
+    # Calculate average daily returns of portfolio
+    f_portf_avg_ret = np.mean(na_portf_rets)
+
+    # Calculate portfolio sharpe ratio
+    # (avg portfolio return / portfolio stdev) * sqrt(252)
+    f_portf_sharpe = (f_portf_avg_ret / f_portf_volatility) * np.sqrt(252)
+
+    return f_portf_volatility, f_portf_avg_ret, f_portf_sharpe, cum_ret
