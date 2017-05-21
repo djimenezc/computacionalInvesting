@@ -18,6 +18,7 @@ import os
 import QSTK.qstkutil.qsdateutil as du
 import QSTK.qstkutil.tsutil as tsu
 import QSTK.qstkutil.DataAccess as da
+import time
 
 # We need closing prices so the timestamp should be hours=16.
 dt_time_of_day = dt.timedelta(hours=16)
@@ -56,9 +57,13 @@ def get_data(dt_start_date, dt_end_date, ls_symbols):
     return d_data, ldt_timestamps
 
 
+def get_close_price(d_data):
+    return d_data['close'].values
+
+
 def plot_close_price_series(d_data, ldt_timestamps, ls_symbols):
     # Getting the numpy ndarray of close prices.
-    na_price = d_data['close'].values
+    na_price = get_close_price(d_data)
     plot_price_series(na_price, ldt_timestamps, ls_symbols)
 
     return na_price
@@ -87,12 +92,16 @@ def get_cumulative_return(na_port_normalized_price):
     return na_port_returns[-1]
 
 
-def simulate(dt_start_date, dt_end_date, ls_symbols, ls_allocations):
-    d_data, ldt_timestamps = get_data(dt_start_date, dt_end_date, ls_symbols)
+'''
+ Calculate Portfolio Statistics 
+ @param na_normalized_price: NumPy Array for normalized prices (starts at 1)
+ @param lf_allocations: allocation list
+ @return list of statistics:
+ (Volatility, Average Return, Sharpe, Cumulative Return)
+'''
 
-    create_output_folder()
-    na_price = plot_close_price_series(d_data, ldt_timestamps, ls_symbols)
 
+def calc_stats(na_price, ls_allocations):
     na_normalized_price = na_price / na_price[0, :]
     na_weighted_price = na_normalized_price * ls_allocations
 
@@ -116,3 +125,63 @@ def simulate(dt_start_date, dt_end_date, ls_symbols, ls_allocations):
     f_portf_sharpe = (f_portf_avg_ret / f_portf_volatility) * np.sqrt(252)
 
     return f_portf_volatility, f_portf_avg_ret, f_portf_sharpe, cum_ret
+
+
+'''
+' Simulate and assess performance of multi-stock portfolio
+' @param li_startDate:	start date in list structure: [year,month,day]
+     e.g. [2012,1,28]
+' @param li_endDate:	end date in list structure: [year,month,day] 
+    e.g. [2012,12,31]
+' @param ls_symbols:	list of symbols: e.g. ['GOOG','AAPL','GLD','XOM']
+' @param lf_allocations:	list of allocations: e.g. [0.2,0.3,0.4,0.1]
+' @param b_print:       print results (True/False)
+'''
+
+
+def simulate(dt_start_date, dt_end_date, ls_symbols, lf_allocations,
+             b_print=False):
+    start = time.time()
+
+    # Check if ls_symbols and lf_allocations have same length
+    if len(ls_symbols) != len(lf_allocations):
+        print "ERROR: Make sure symbol and allocation lists have same number " \
+              "of elements."
+        return
+    # Check if lf_allocations adds up to 1
+    sum_allocations = 0
+    for x in lf_allocations:
+        sum_allocations += x
+    if sum_allocations != 1:
+        print "ERROR: Make sure allocations add up to 1."
+        return
+
+    # Prepare data for statistics
+    # d_data = readData(li_start_date, li_end_date, ls_symbols)[0]
+    d_data, ldt_timestamps = get_data(dt_start_date, dt_end_date, ls_symbols)
+
+    create_output_folder()
+    na_price = plot_close_price_series(d_data, ldt_timestamps, ls_symbols)
+
+    # Normalize prices to start at 1 (if we do not do this, then portfolio value
+    # must be calculated by weight*Budget/startPriceOfStock)
+    na_normalized_price = na_price / na_price[0, :]
+
+    lf_stats = calc_stats(na_normalized_price, lf_allocations)
+
+    # Print results
+    if b_print:
+        print "Start Date: ", dt_start_date
+        print "End Date: ", dt_end_date
+        print "Symbols: ", ls_symbols
+        print "Volatility (stdev daily returns): ", lf_stats[0]
+        print "Average daily returns: ", lf_stats[1]
+        print "Sharpe ratio: ", lf_stats[2]
+        print "Cumulative daily return: ", lf_stats[3]
+
+        print "Run in: ", (time.time() - start), " seconds."
+
+    # Return list: [Volatility, Average Returns, Sharpe Ratio, Cumulative
+    # Return]
+
+    return lf_stats[0:3]
