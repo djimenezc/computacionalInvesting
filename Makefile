@@ -8,4 +8,4 @@ test-coverage:
 	nosetests tests --with-coverage --cover-min-percentage=60 --cover-inclusive --cover-package=logtrust
 
 check-style:
-	pep8 logtrust/*.py
+	pep8 assignments/*.py tests/*.py
