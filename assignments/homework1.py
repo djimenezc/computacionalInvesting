@@ -139,7 +139,7 @@ def calc_stats(na_price, ls_allocations):
 '''
 
 
-def simulate(dt_start_date, dt_end_date, ls_symbols, lf_allocations,
+def simulate(dt_start_date, dt_end_date, lf_allocations, ls_symbols,
              b_print=False):
     start = time.time()
 

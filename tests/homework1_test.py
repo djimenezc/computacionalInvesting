@@ -29,6 +29,15 @@ def test_calc_stats(dt_start_date, dt_end_date, allocations, ls_symbols,
     assert np.isclose(sharpe, sharpe_exp)
 
 
+@parameterized([
+    (dt.datetime(2011, 1, 1), dt.datetime(2011, 12, 31),
+     [0.4, 0.4, 0.0, 0.2], ['AAPL', 'GLD', 'GOOG', 'XOM'])
+])
+def test_simulate(dt_start_date, dt_end_date, allocations, ls_symbols):
+    assert simulate(dt_start_date, dt_end_date, allocations,
+                    ls_symbols, True) is not None
+
+
 def test_plot_prices():
     ls_symbols = ['AAPL', 'GLD', 'GOOG', 'XOM']
     dt_start_date = dt.datetime(2011, 1, 1)
