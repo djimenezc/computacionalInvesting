@@ -19,6 +19,7 @@ import QSTK.qstkutil.qsdateutil as du
 import QSTK.qstkutil.tsutil as tsu
 import QSTK.qstkutil.DataAccess as da
 import time
+import itertools
 
 # We need closing prices so the timestamp should be hours=16.
 dt_time_of_day = dt.timedelta(hours=16)
@@ -185,3 +186,72 @@ def simulate(dt_start_date, dt_end_date, lf_allocations, ls_symbols,
     # Return]
 
     return lf_stats[0:3]
+
+
+def optimize_precise(na_normalized_price, port_len):
+    return []
+
+
+def calculate_allocations_list(port_len, percentage_slot=10):
+
+    numbers = range(0, (100 / percentage_slot) + 1)
+    result = [seq for i in [0] for seq in
+              itertools.product(numbers, repeat=port_len) if
+              sum(seq) == 10 and len(seq) == port_len]
+    return (np.asarray(result, dtype=float) / 10).tolist()
+
+
+def optimize_non_precise(na_normalized_price, port_len):
+    ls_allocations = calculate_allocations_list(port_len)
+
+    return []
+
+
+'''
+' Optimize portfolio allocations  to maximise Sharpe ratio
+' @param li_startDate:	start date in list structure: [year,month,day] 
+    e.g. [2012,1,28]
+' @param li_endDate:	end date in list structure: [year,month,day] 
+    e.g. [2012,12,31]
+' @param ls_symbols:	list of symbols: e.g. ['GOOG','AAPL','GLD','XOM']
+' @param s_precision:   true - precise optimization; false - 
+    10% increments & positive weights
+'''
+
+
+def optimize(dt_start_date, dt_end_date, ls_symbols, b_precision=False):
+    start = time.time()
+
+    # Prepare data for statistics
+    d_data, ldt_timestamps = get_data(dt_start_date, dt_end_date, ls_symbols)
+
+    # Get numpy ndarray of close prices (numPy)
+    na_price = d_data['close'].values
+
+    # Normalize prices to start at 1 (if we do not do this, then portfolio value
+    # must be calculated by weight*Budget/startPriceOfStock)
+    na_normalized_price = na_price / na_price[0, :]
+
+    port_len = len(ls_symbols)
+
+    if b_precision:
+        lf_curr_eff_allocation = optimize_precise(na_normalized_price, port_len)
+    else:
+        lf_curr_eff_allocation = optimize_non_precise(na_normalized_price,
+                                                      port_len)
+
+    lf_curr_stats = calc_stats(na_price, lf_curr_eff_allocation)
+
+    # Print results:
+    print "Start Date: ", dt_start_date
+    print "End Date: ", dt_end_date
+    print "Symbols: ", ls_symbols
+    print "Optimal Allocations: ", lf_curr_eff_allocation
+    print "Volatility (stdev daily returns): ", lf_curr_stats[0]
+    print "Average daily returns: ", lf_curr_stats[1]
+    print "Sharpe ratio: ", lf_curr_stats[2]
+    print "Cumulative daily return: ", lf_curr_stats[3]
+
+    print "Run in: ", (time.time() - start), " seconds."
+
+    return lf_curr_eff_allocation

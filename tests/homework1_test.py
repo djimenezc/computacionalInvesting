@@ -1,6 +1,7 @@
 from nose_parameterized import parameterized
 from assignments.homework1 import simulate, get_data, calc_stats, \
-    create_output_folder, plot_close_price_series, get_close_price
+    create_output_folder, plot_close_price_series, get_close_price, optimize, \
+    calculate_allocations_list
 import datetime as dt
 import numpy as np
 
@@ -48,3 +49,23 @@ def test_plot_prices():
     na_price = plot_close_price_series(d_data, ldt_timestamps, ls_symbols)
 
     assert na_price is not None
+
+
+@parameterized([
+    (dt.datetime(2011, 1, 1), dt.datetime(2011, 12, 31),
+     ['AAPL', 'GLD', 'GOOG', 'XOM'])
+])
+def test_optimize(dt_start_date, dt_end_date, ls_symbols):
+    assert optimize(dt_start_date, dt_end_date, ls_symbols) is not None
+
+
+def test_calculate_allocations_list():
+    ls_allocations = calculate_allocations_list(1, 10)
+    assert len(ls_allocations) == 1
+    assert ls_allocations[0][0] == 1
+    ls_allocations = calculate_allocations_list(2, 10)
+    assert len(ls_allocations) == 11
+    ls_allocations = calculate_allocations_list(3, 10)
+    assert len(ls_allocations) == 66
+    ls_allocations = calculate_allocations_list(4, 10)
+    assert len(ls_allocations) == 286
