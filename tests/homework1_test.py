@@ -58,7 +58,7 @@ def test_plot_prices():
 def test_optimize(dt_start_date, dt_end_date, ls_symbols):
     best_port, stats = \
         optimize(dt_start_date, dt_end_date, ls_symbols)
-    assert stats[Stats.SHARPE_RATIO] == 1.02828403099
+    assert np.isclose(stats[Stats.SHARPE_RATIO], 1.02828403099)
     assert best_port == [0.4, 0.4, 0, 0.2]
 
 
@@ -76,10 +76,10 @@ def test_calculate_allocations_list():
 
 def test_print_stats():
     stats = {
-        Stats.VOLATILITY: 1,
-        Stats.AVERAGE_RETURNS: 2,
-        Stats.SHARPE_RATIO: 3,
-        Stats.CUMULATIVE_RETURN: 4
+        Stats.VOLATILITY: 50,
+        Stats.AVERAGE_RETURNS: 60,
+        Stats.SHARPE_RATIO: 40,
+        Stats.CUMULATIVE_RETURN: 11
     }
     print_stats(stats)
 
