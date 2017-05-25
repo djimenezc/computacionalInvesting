@@ -10,3 +10,4 @@ python-dateutil==1.5
 statsmodels
 nose
 parameterized
+enum34

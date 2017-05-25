@@ -1,7 +1,7 @@
 from nose_parameterized import parameterized
 from assignments.homework1 import simulate, get_data, calc_stats, \
     create_output_folder, plot_close_price_series, get_close_price, optimize, \
-    calculate_allocations_list
+    calculate_allocations_list, Stats, print_stats
 import datetime as dt
 import numpy as np
 
@@ -56,7 +56,10 @@ def test_plot_prices():
      ['AAPL', 'GLD', 'GOOG', 'XOM'])
 ])
 def test_optimize(dt_start_date, dt_end_date, ls_symbols):
-    assert optimize(dt_start_date, dt_end_date, ls_symbols) is not None
+    best_port, stats = \
+        optimize(dt_start_date, dt_end_date, ls_symbols)
+    assert stats[Stats.SHARPE_RATIO] == 1.02828403099
+    assert best_port == [0.4, 0.4, 0, 0.2]
 
 
 def test_calculate_allocations_list():
@@ -69,3 +72,17 @@ def test_calculate_allocations_list():
     assert len(ls_allocations) == 66
     ls_allocations = calculate_allocations_list(4, 10)
     assert len(ls_allocations) == 286
+
+
+def test_print_stats():
+    stats = {
+        Stats.VOLATILITY: 1,
+        Stats.AVERAGE_RETURNS: 2,
+        Stats.SHARPE_RATIO: 3,
+        Stats.CUMULATIVE_RETURN: 4
+    }
+    print_stats(stats)
+
+
+def test_plot_portfolio_returns():
+    assert True

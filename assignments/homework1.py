@@ -20,6 +20,7 @@ import QSTK.qstkutil.tsutil as tsu
 import QSTK.qstkutil.DataAccess as da
 import time
 import itertools
+from enum import Enum
 
 # We need closing prices so the timestamp should be hours=16.
 dt_time_of_day = dt.timedelta(hours=16)
@@ -28,6 +29,13 @@ dt_time_of_day = dt.timedelta(hours=16)
 c_data_obj = da.DataAccess('Yahoo', cachestalltime=0)
 # Keys to be read from the data, it is good to read everything in one go.
 ls_keys = ['open', 'high', 'low', 'close', 'volume', 'actual_close']
+
+
+class Stats(Enum):
+    VOLATILITY = 0
+    AVERAGE_RETURNS = 1
+    SHARPE_RATIO = 2
+    CUMULATIVE_RETURN = 3
 
 
 def create_output_folder():
@@ -153,16 +161,15 @@ def simulate(dt_start_date, dt_end_date, lf_allocations, ls_symbols,
     sum_allocations = 0
     for x in lf_allocations:
         sum_allocations += x
-    if sum_allocations != 1:
+    # noinspection PyTypeChecker
+    if not np.isclose(sum_allocations, 1):
         print "ERROR: Make sure allocations add up to 1."
         return
 
     # Prepare data for statistics
     # d_data = readData(li_start_date, li_end_date, ls_symbols)[0]
     d_data, ldt_timestamps = get_data(dt_start_date, dt_end_date, ls_symbols)
-
-    create_output_folder()
-    na_price = plot_close_price_series(d_data, ldt_timestamps, ls_symbols)
+    na_price = get_close_price(d_data)
 
     # Normalize prices to start at 1 (if we do not do this, then portfolio value
     # must be calculated by weight*Budget/startPriceOfStock)
@@ -172,6 +179,9 @@ def simulate(dt_start_date, dt_end_date, lf_allocations, ls_symbols,
 
     # Print results
     if b_print:
+        create_output_folder()
+        plot_close_price_series(d_data, ldt_timestamps, ls_symbols)
+
         print "Start Date: ", dt_start_date
         print "End Date: ", dt_end_date
         print "Symbols: ", ls_symbols
@@ -182,10 +192,12 @@ def simulate(dt_start_date, dt_end_date, lf_allocations, ls_symbols,
 
         print "Run in: ", (time.time() - start), " seconds."
 
-    # Return list: [Volatility, Average Returns, Sharpe Ratio, Cumulative
-    # Return]
-
-    return lf_stats[0:3]
+    return {
+        Stats.VOLATILITY: lf_stats[0],
+        Stats.AVERAGE_RETURNS: lf_stats[1],
+        Stats.SHARPE_RATIO: lf_stats[2],
+        Stats.CUMULATIVE_RETURN: lf_stats[3]
+    }
 
 
 def optimize_precise(na_normalized_price, port_len):
@@ -193,7 +205,6 @@ def optimize_precise(na_normalized_price, port_len):
 
 
 def calculate_allocations_list(port_len, percentage_slot=10):
-
     numbers = range(0, (100 / percentage_slot) + 1)
     result = [seq for i in [0] for seq in
               itertools.product(numbers, repeat=port_len) if
@@ -201,10 +212,36 @@ def calculate_allocations_list(port_len, percentage_slot=10):
     return (np.asarray(result, dtype=float) / 10).tolist()
 
 
-def optimize_non_precise(na_normalized_price, port_len):
-    ls_allocations = calculate_allocations_list(port_len)
+def optimize_non_precise(dt_start_date, dt_end_date, ls_symbols,
+                         ratio_diana=Stats.SHARPE_RATIO):
+    ls_allocations = calculate_allocations_list(len(ls_symbols))
+    best_port = []
+    best_ratio_diana = 0
+    best_port_stats = None
 
-    return []
+    # noinspection PyTypeChecker
+    print 'Looking for the best allocation between %s possibilities' % len(
+        ls_allocations)
+
+    for idx, allocation in enumerate(ls_allocations):
+        print "Simulating allocation %s number %s" % (', '.join(
+                map(str, allocation)), idx)
+        stats = simulate(dt_start_date, dt_end_date, allocation, ls_symbols)
+        if stats[ratio_diana] > best_ratio_diana:
+            best_port = allocation
+            best_ratio_diana = stats[ratio_diana]
+            best_port_stats = stats
+            print '[Found better allocation [%s]  new value %s]' % (', '.join(
+                map(str, best_port)), best_ratio_diana)
+
+    print 'Best allocation [%s]' % (', '.join(map(str, best_port)))
+    print_stats(best_port_stats)
+
+    return best_port, best_port_stats
+
+
+def print_stats(stats):
+    print 'stats: [%s]' % (', '.join(map(lambda x: str(x.value), stats)))
 
 
 '''
@@ -228,8 +265,9 @@ def optimize(dt_start_date, dt_end_date, ls_symbols, b_precision=False):
     # Get numpy ndarray of close prices (numPy)
     na_price = d_data['close'].values
 
-    # Normalize prices to start at 1 (if we do not do this, then portfolio value
-    # must be calculated by weight*Budget/startPriceOfStock)
+    # Normalize prices to start at 1 (if we do not do this,
+    # then portfolio value must be calculated by
+    #  weight*Budget/startPriceOfStock)
     na_normalized_price = na_price / na_price[0, :]
 
     port_len = len(ls_symbols)
@@ -237,8 +275,8 @@ def optimize(dt_start_date, dt_end_date, ls_symbols, b_precision=False):
     if b_precision:
         lf_curr_eff_allocation = optimize_precise(na_normalized_price, port_len)
     else:
-        lf_curr_eff_allocation = optimize_non_precise(na_normalized_price,
-                                                      port_len)
+        lf_curr_eff_allocation = optimize_non_precise(dt_start_date,
+                                                      dt_end_date, ls_symbols)
 
     lf_curr_stats = calc_stats(na_price, lf_curr_eff_allocation)
 
