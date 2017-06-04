@@ -225,7 +225,7 @@ def optimize_non_precise(dt_start_date, dt_end_date, ls_symbols,
 
     for idx, allocation in enumerate(ls_allocations):
         print "Simulating allocation %s number %s" % (', '.join(
-                map(str, allocation)), idx)
+            map(str, allocation)), idx)
         stats = simulate(dt_start_date, dt_end_date, allocation, ls_symbols)
         if stats[ratio_diana] > best_ratio_diana:
             best_port = allocation
@@ -272,11 +272,14 @@ def optimize(dt_start_date, dt_end_date, ls_symbols, b_precision=False):
 
     port_len = len(ls_symbols)
 
+    stats = []
+
     if b_precision:
         lf_curr_eff_allocation = optimize_precise(na_normalized_price, port_len)
     else:
         lf_curr_eff_allocation, stats = optimize_non_precise(dt_start_date,
-                                                      dt_end_date, ls_symbols)
+                                                             dt_end_date,
+                                                             ls_symbols)
 
     lf_curr_stats = calc_stats(na_price, lf_curr_eff_allocation)
 
