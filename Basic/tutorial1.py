@@ -25,9 +25,10 @@ import QSTK.qstkutil.DataAccess as da
 
 print "Pandas Version", pd.__version__
 
+''' Main Function'''
+
 
 def main():
-    ''' Main Function'''
 
     # List of symbols
     ls_symbols = ["AAPL", "GLD", "GOOG", "$SPX", "XOM"]
@@ -37,10 +38,10 @@ def main():
     dt_end = dt.datetime(2017, 05, 20)
 
     # We need closing prices so the timestamp should be hours=16.
-    dt_timeofday = dt.timedelta(hours=16)
+    dt_time_of_day = dt.timedelta(hours=16)
 
     # Get a list of trading days between the start and the end.
-    ldt_timestamps = du.getNYSEdays(dt_start, dt_end, dt_timeofday)
+    ldt_timestamps = du.getNYSEdays(dt_start, dt_end, dt_time_of_day)
 
     # Creating an object of the dataaccess class with Yahoo as the source.
     c_dataobj = da.DataAccess('Yahoo')
