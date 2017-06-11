@@ -17,8 +17,8 @@ DT_TIME_OF_DAY = dt.timedelta(hours=16)
 def extract_data_from_orders_file(orders_file_name):
     symbols_dic = {}
     orders = []
-    with open(orders_file_name, 'rU') as csvfile:
-        orders_reader = csv.reader(csvfile, delimiter=',')
+    with open(orders_file_name, 'rU') as csv_file:
+        orders_reader = csv.reader(csv_file, delimiter=',')
 
         for row in orders_reader:
             orders.append(
